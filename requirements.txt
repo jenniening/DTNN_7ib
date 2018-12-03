@@ -1,5 +1,37 @@
 # local package
 -e .
+ase==3.15.0
+backports.functools-lru-cache==1.4
+bleach==1.5.0
+certifi==2018.4.16
+click==6.7
+cycler==0.10.0
+enum34==1.1.6
+Flask==0.12.2
+html5lib==0.9999999
+itsdangerous==0.24
+Jinja2==2.10
+kiwisolver==1.0.1
+Markdown==2.6.10
+MarkupSafe==1.0
+matplotlib==2.2.2
+numpy==1.14.0
+olefile==0.45.1
+pandas==0.23.1
+Pillow==5.1.0
+protobuf==3.5.0.post1
+pycairo==1.16.3
+pyparsing==2.2.0
+python-dateutil==2.6.1
+pytz==2017.3
+scikit-learn==0.19.1
+scipy==1.0.0
+six==1.11.0
+tensorflow==1.4.1
+tensorflow-gpu==1.4.1
+tensorflow-tensorboard==0.4.0
+tornado==4.5.2
+Werkzeug==0.12.2
 
 # external requirements
 click
