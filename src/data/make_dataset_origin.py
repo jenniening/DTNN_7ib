@@ -31,7 +31,7 @@ def main(input_filepath, output_filepath, split_times, train_size = 99000, val_s
     logger.info("Prepare raw data")
     datadir_raw = os.path.join(output_filepath,"raw")
     ### Download atom reference and gdb9 data ###
-    load_atomrefs(os.path.join(datadir_raw, "atomrefs.txt")
+    load_atomrefs(os.path.join(datadir_raw, "atomrefs.txt"))
     load_data(os.path.join(datadir_raw,"gdb9.db"))
     ### Split data ###
     datadir_pro = os.path.join(output_filepath,"process")
@@ -42,7 +42,7 @@ def main(input_filepath, output_filepath, split_times, train_size = 99000, val_s
         dstdir = datadir_pro + "/split_" + str(i+1)
         partitions = {"train":train_size,"validation":val_size,"test_live":test_live_size,"test":-1}
         split_ase_db(asedb,dstdir,partitions)
-        logger.info("split_" + str(i+1) + " finish"))
+        logger.info("split_" + str(i+1) + " finish")
     logger.info("Done. ")
 
     logger.info("Generate MMFF optimized geometries")
