@@ -61,7 +61,6 @@ def main(input_filepath, output_filepath, split_times, train_size = 99000, val_s
             inpath = datadir_pro + "/split_" + str(i+1) + "/" + t
             outpath = os.path.join(output_filepath,"ready/split_" + str(i+1) + "/")
             outfile = os.path.join(outpath,t + ".tfrecord")
-            size = 
             predictLayer(inpath, outfile, size)
     
     logger.info('making final data set from raw data')
