@@ -26,7 +26,7 @@ import logging
 @click.command()
 @click.option("--datatype", default = "qm9mmff", show_default = True, help = "Please identify which dataset you want to proces:qm9mmff,emol9mmff,platinummmff")
 @click.option("--inputdir", default = "../../data/raw",show_default = True, help = "Input directory", type = click.Path(exists = True))
-@click.option("--outputdir",default = "../../data/processed",show_default = True, help = "Input directory", type = click.Path())
+@click.option("--outputdir",default = "../../data/processed",show_default = True, help = "Output directory", type = click.Path())
 
 
 def main(datatype, outputdir, inputdir):

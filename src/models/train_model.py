@@ -1,0 +1,117 @@
+### script used to train model ###
+import tensorflow as tf
+import numpy as np
+
+import DTNN_train
+from DTNN_train import read_mustd
+from DTNN_train import get_ref
+from DTNN_train import runmodel
+
+import os
+import click
+import logging
+
+
+@click.command()
+@click.option("--refidx",default = "10", show_default = True, help = "Target index")
+@click.option("--modeltype", default = "qm9mmff", show_default = True, help = "Please identify which model you want to train: dtnn7id, tlmmff, tlconfmmff")
+@click.option("--batchsize",default = "100", show_default = True, help = "Training batchsize")
+@click.option("--opt",default = "Adam", show_default = True, help = "Training optimizer: Adam, GD")
+@click.option("--trainschedule",default = "cyclic", show_default = True, help = "Training schedule: cylcic, constant, decay")
+@click.option("--cycles",default = "8", show_default = True, help = "Number of cycles in cyclic training schedule")
+@click.option("--decayrate",default = "0.95", show_default = True, help = "Decay rate in decay training schedule")
+@click.option("--lrint",default = "0.001", show_default = True, help = "Initial learning rate")
+@click.option("--nbasis",default = "256", show_default = True, help = "Number of basis functions")
+@click.option("--ninteractions",default = "7", show_default = True, help = "Depth of interaction blocks")
+@click.option("--cutoff",default = "3", show_default = True, help = "Distance cutoff")
+@click.option("--step",default = "0.1", show_default = True, help = "Step between Gaussians")
+@click.option("--activation",default = "0.1", show_default = True, help = "Activation function in interaction block")
+@click.option("--weights",default = "update", show_default = True, help = "Share or update weights in interaction block")
+@click.option("--nepoch",default = "400", show_default = True, help = "Training epochs")
+@click.option("--checkpointinterval",default = "1000", show_default = True, help = "Check point every n steps")
+@click.option("--inputdir", default = "../../data/processed",show_default = True, help = "Input directory", type = click.Path(exists = True))
+@click.option("--outputdir",default = "../../models/",show_default = True, help = "Output directory", type = click.Path())
+### when transfer learning model (tlmmff,tlconfmmff), use transferlearning flag and provide restorename ###
+@click.option("--transferlearning",is_flag=True, help = "Transfer learning flag")
+@click.option("--restorename",default = "None", show_default = True, help = "Restore model in transfer learning")
+
+
+
+def main(inputdir, outputdir, refidx, modeltype, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, activation, weights, nepoch, transferlearning, restorename, checkpointinterval):
+    inputdir = os.path.realpath(inputdir)
+    outputdir = os.path.realpath(outputdir)
+    outputdir = os.path.join(outputdir,modeltype)
+    os.system("mkdir " + outputdir)
+    os.chdir(outputdir)
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    logger.info("HYPERPARAMETERS:")
+    logger.info("Target Index:" + refidx )
+    logger.info("Model Type:" + modeltype)
+    logger.info("Batch Size:" + batchsize )
+    logger.info("Optimizer Type:" + opt )
+    logger.info("Train Schedule:" + trainschedule)
+    if trainschedule == "cyclic":
+        logger.info("Cycles:" + cycles)
+    if trainschedule == "decay":
+        logger.info("Decay Rate" + decayrate)
+    logger.info("Initial Learning Rate:" + lrint )
+    #logger.info("Initializer Type:" + initialize )
+    #logger.info("Dropout:" + str(dropout) )
+    #logger.info("Batchnorm:" + str(batchnorm) )
+    logger.info("N_basis:" + nbasis )
+    logger.info("N_interactions:" + ninteractions)
+    logger.info("Distance Cutoff:" + cutoff )
+    logger.info("Distance Step:" + step )
+    logger.info("Activation Function:" + activation )
+    logger.info("Weights:" + weights)
+    logger.info("N_epochs:" + nepoch )
+    logger.info("Transfer Learning:" + transferlearning)
+    if transferlearning:
+        logger.info("Restore Model:" + restorename)
+    logger.info("Checkpoint Interval:"+ checkpointinterval)
+
+    args = [refidx, modeltype, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, nepoch, transferlearning, restorname]
+
+    tf.reset_default_graph()
+    train_data = os.path.join(inputdir,"train.tfrecord")
+    val_data = os.path.join(inputdir,"validation.tfrecord")
+    test_data = os.path.join(inputdir,"test_live.tfrecord")
+
+    train_size = sum(1 for example in tf.python_io.tf_record_iterator(train_data))
+    val_size = sum(1 for example in tf.python_io.tf_record_iterator(val_data))
+    test_size = sum(1 for example in tf.python_io.tf_record_iterator(test_data))
+
+    logger.info("Total train:" + str(train_size) )
+    logger.info("Total validation:" + str(val_size) )
+    logger.info("Total test:" + str(test_size) )
+    if transferlearning:
+        inref1 = os.path.join(inputdir,"atomref.B3LYP_631Gd.npz")
+    else:
+        inref1 = os.path.join(inputdir,"atomrefs.txt.npz")
+    
+    atom_ref = get_ref(inref1, refidx)
+    inref2 = os.path.join(inputdir,"reference.csv")
+    mu, std = read_mustd(inref2,refidx)
+    logger.info("mu:" + str(mu))
+    logger.info("std:" + str(std) )
+    n_iterations = int(np.ceil(int(nepoch) * train_size/ int(batchsize)))
+    logger.info("Total iterations:" + str(n_iterations) )
+
+    ### model name ###
+    args = [refidx, modeltype, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, nepoch, transferlearning, restorename]
+    model_name = "model_" + "_".join(args)
+    # train position
+    train_position_dic = {"dtnn7id":"positions","tlmmff":"mmffpositions","tlconfmmff":"positions1"}
+    train_position = train_position_dic[modeltype]
+    # transfer 
+
+
+    runmodel(int(refidx), train_position, train_data, val_data, test_data, train_size, val_size, test_size, 
+            int(batchsize), int(nbasis), int(ninteractions), float(cutoff), float(step), 
+            activation, weights, opt, trainschedule, int(cycles), float(lrint), float(decayrate),int(n_iterations), 
+            mu, std, atom_ref, 
+            model_name, transferlearning, restorename, logger, checkpointinterval)
+#
