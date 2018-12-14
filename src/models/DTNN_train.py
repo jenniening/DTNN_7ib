@@ -45,17 +45,14 @@ def get_model(transferlearning, train_features,
     :return: model information (output)
     '''
 
-    
-    if reuse == "share":
-        model = Model_reuse(train_features,n_basis,n_interactions, activation, mu, std, atom_ref)
-    elif resue == "update":
-        model = Model_reusenone(train_features,n_basis,n_interactions, activation, mu, std, atom_ref)
-    
     if transferlearning:
-        model = Model_transfer(train_features, mu, std, atom_ref))
-    
-
-    
+        model = Model_trans()
+    elif:
+        if reuse == "share":
+            model = Model_reuse(train_features,n_basis,n_interactions, activation, mu, std, atom_ref)
+        elif resue == "update":
+            model = Model_reusenone(train_features,n_basis,n_interactions, activation, mu, std, atom_ref)
+ 
     return model.mymodel()
 
 def get_lr(lr_int, i, cycle_steps):

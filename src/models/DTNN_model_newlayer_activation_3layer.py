@@ -1,6 +1,10 @@
-### Model Architecture ###
+# The Training Part of DTNN Model
 import numpy as np
 import tensorflow as tf
+
+####
+# Models Code
+####
 
 def shape(x):
     if isinstance(x, tf.Tensor):
@@ -21,10 +25,8 @@ def reference_initializer(ref):
     def initializer(shape, dtype, partition_info=None):
         return tf.cast(tf.constant(np.reshape(ref, shape)), dtype)
     return initializer
-
 def _softplus(x):
     return tf.log1p(tf.exp(x))
-
 def shifted_softplus(x):
     """
     Softplus nonlinearity shifted by -log(2) such that shifted_softplus(0.) = 0.
@@ -34,7 +36,6 @@ def shifted_softplus(x):
     """
     y = tf.where(x < 14., _softplus(tf.where(x < 14., x, tf.zeros_like(x))), x)
     return y - tf.log(2.)
-
 
 def dense(x, n_out,
           nonlinearity=None,
@@ -73,8 +74,8 @@ def dense(x, n_out,
         new_shape = tf.concat([tf.shape(x)[:ndims - 1], [n_out]], axis=0)
         y = tf.reshape(y, new_shape)
 
-        #new_dims = x_shape[:-1] + [n_out]
-        #y.set_shape(new_dims)
+        new_dims = x_shape[:-1] + [n_out]
+        y.set_shape(new_dims)
         tf.summary.histogram('activations', y)
 
     return y
@@ -142,21 +143,21 @@ def masked_mean(x, mask=None, axes=None,
 
 class Model:
 
-    def __init__(self, features, n_basis, n_interactions, activation,mu, std, atom_ref):
+    def __init__(self, features, mu, std, atom_ref,n ):
         self.features = features
         self.mu = mu
         self.std = std
         self.atom_ref = atom_ref
-        self.n_basis = n_basis
-        self.n_interactions = n_interactions
-        self.activation = activation
+
     def mymodel(self):
 
         """
         The features are in batching.
         """
 
+        n_basis = 256
         n_factors = 60
+        n_interactions = 7
 
         mu = tf.constant(self.mu, tf.float32)
         std = tf.constant(self.std, tf.float32)
@@ -166,59 +167,53 @@ class Model:
         C = self.features['rdf']
 
         # masking
-
-        mask = tf.cast(tf.expand_dims(Z, 1) * tf.expand_dims(Z, 2), tf.float32)
-        mask = tf.matrix_set_diag(mask, tf.zeros_like(tf.matrix_diag_part(mask)))
+        mask = tf.cast(tf.expand_dims(Z, 1) * tf.expand_dims(Z, 2),
+                       tf.float32)
+        diag = tf.matrix_diag_part(mask)
+        diag = tf.ones_like(diag)
+        offdiag = 1 - tf.matrix_diag(diag)
+        mask *= offdiag
         mask = tf.expand_dims(mask, -1)
-        
+
         I = np.eye(20).astype(np.float32)
         ZZ = tf.nn.embedding_lookup(I, Z)
-        r = tf.sqrt(1. / tf.sqrt(float(self.n_basis)))
-        X = dense(ZZ, self.n_basis, use_bias=False,
+        print(tf.shape(ZZ))
+        r = tf.sqrt(1. / tf.sqrt(float(n_basis)))
+        X = dense(ZZ, n_basis, use_bias=False,
                     weight_init=tf.random_normal_initializer(stddev=r))
 
         fC = dense(C, n_factors, use_bias=True)
 
         reuse = None
-        for i in range(self.n_interactions):
+        for i in range(n_interactions):
+            print(i)
 
             tmp = tf.expand_dims(X, 1)
             fX = dense(tmp, n_factors, use_bias=True,
-                         scope='in2fac' + str(i), reuse=reuse)
+                         scope='in2fac' + str(i) , reuse=reuse)
 
             fVj = fX * fC
             
-            if self.activation == "SSoftp":
-                Vj = dense(fVj, self.n_basis, use_bias=False,
+            Vj = dense(fVj, n_basis, use_bias=False,
                          weight_init=tf.constant_initializer(0.0),
                          scope='fac2out' + str(i), reuse=reuse)
-                Vj = shifted_softplus(Vj)
-            elif self.activation == "selu":
-                Vj = dense(fVj, self.n_basis, use_bias=False,
-                         weight_init=tf.random_normal_initializer(stddev = 1.0/n_factors),
-                         nonlinearity=tf.nn.selu,
-                         scope='fac2out' + str(i), reuse=reuse)
-                #Vj = tf.contrib.nn.alpha_droupout(Vj, 0.9)
-            elif self.activation == "relu":
-                Vj = dense(fVj, self.n_basis, use_bias=False,
-                         weight_init=tf.constant_initializer(0.0),
-                         nonlinearity=tf.nn.relu,
-                         scope='fac2out' + str(i), reuse=reuse)
-            else:
-                Vj = dense(fVj, self.n_basis, use_bias=False,
-                         weight_init=tf.constant_initializer(0.0),
-                         nonlinearity=tf.nn.tanh,
-                         scope='fac2out' + str(i), reuse=reuse)
-
+            Vj = shifted_softplus(Vj)
+            
             V = masked_sum(Vj, mask, axes=2)
 
             X += V
             reuse = None
 
             # output
-        o1 = dense(X, self.n_basis // 2, nonlinearity=tf.nn.tanh)
-
-        yi = dense(o1, 1,
+        o1 = dense(X, n_basis // 2)
+        o1 = shifted_softplus(o1)
+        o = o1
+        num = 2
+        for i in range(n):
+            num = num * 2
+            o = dense(o, n_basis//num), name = "new_" * (n + 1) + "layer")
+            o = shifted_softplus(o)
+        yi = dense(o, 1,
                      weight_init=tf.constant_initializer(0.0),
                      use_bias=True)
 
