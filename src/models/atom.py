@@ -1,10 +1,6 @@
+### Gaussian Expansion ###
 import numpy as np
 import tensorflow as tf
-
-
-####
-# Processing step
-####
 
 def interatomic_distances(positions):
     """

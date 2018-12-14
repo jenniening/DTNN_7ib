@@ -1,10 +1,8 @@
-# The Training Part of DTNN Model
+### Model Architecture ###
+### Detailed description can be found in notebooks tutorial ### 
+
 import numpy as np
 import tensorflow as tf
-
-####
-# Models Code
-####
 
 def shape(x):
     if isinstance(x, tf.Tensor):
@@ -25,6 +23,14 @@ def reference_initializer(ref):
     def initializer(shape, dtype, partition_info=None):
         return tf.cast(tf.constant(np.reshape(ref, shape)), dtype)
     return initializer
+
+def _softplus(x):
+    return tf.log1p(tf.exp(x))
+
+def shifted_softplus(x):
+    y = tf.where(x < 14., _softplus(tf.where(x < 14., x, tf.zeros_like(x))), x)
+    return y - tf.log(2.)
+
 
 def dense(x, n_out,
           nonlinearity=None,
@@ -63,8 +69,8 @@ def dense(x, n_out,
         new_shape = tf.concat([tf.shape(x)[:ndims - 1], [n_out]], axis=0)
         y = tf.reshape(y, new_shape)
 
-        new_dims = x_shape[:-1] + [n_out]
-        y.set_shape(new_dims)
+        #new_dims = x_shape[:-1] + [n_out]
+        #y.set_shape(new_dims)
         tf.summary.histogram('activations', y)
 
     return y
@@ -132,13 +138,16 @@ def masked_mean(x, mask=None, axes=None,
 
 class Model:
 
-    def __init__(self, features,n_basis,n_interactions, activation, mu, std, atom_ref):
+    def __init__(self, features, n_basis, n_interactions, activation,mu, std, atom_ref,num_readout_add,transferlearning):
         self.features = features
         self.mu = mu
         self.std = std
         self.atom_ref = atom_ref
         self.n_basis = n_basis
         self.n_interactions = n_interactions
+        self.activation = activation
+        self.transferlearning = transferlearning
+        self.nr = num_readout_add
 
     def mymodel(self):
 
@@ -155,50 +164,75 @@ class Model:
         Z = self.features['elements']
         C = self.features['rdf']
 
-        # masking
-        mask = tf.cast(tf.expand_dims(Z, 1) * tf.expand_dims(Z, 2),
-                       tf.float32)
-        diag = tf.matrix_diag_part(mask)
-        diag = tf.ones_like(diag)
-        offdiag = 1 - tf.matrix_diag(diag)
-        mask *= offdiag
-        mask = tf.expand_dims(mask, -1)
+        ### masking ###
 
+        mask = tf.cast(tf.expand_dims(Z, 1) * tf.expand_dims(Z, 2), tf.float32)
+        mask = tf.matrix_set_diag(mask, tf.zeros_like(tf.matrix_diag_part(mask)))
+        mask = tf.expand_dims(mask, -1)
+        
+        ### input initilization ###
         I = np.eye(20).astype(np.float32)
         ZZ = tf.nn.embedding_lookup(I, Z)
-        print(tf.shape(ZZ))
         r = tf.sqrt(1. / tf.sqrt(float(self.n_basis)))
         X = dense(ZZ, self.n_basis, use_bias=False,
                     weight_init=tf.random_normal_initializer(stddev=r))
-
         fC = dense(C, n_factors, use_bias=True)
 
+        ### interaction block ###
         reuse = None
         for i in range(self.n_interactions):
-            print(i)
 
             tmp = tf.expand_dims(X, 1)
             fX = dense(tmp, n_factors, use_bias=True,
-                         scope='in2fac', reuse=reuse)
+                         scope='in2fac' + str(i), reuse=reuse)
 
             fVj = fX * fC
-
-            Vj = dense(fVj, self.n_basis, use_bias=False,
+            
+            if self.activation == "SSoftp":
+                Vj = dense(fVj, self.n_basis, use_bias=False,
+                         weight_init=tf.constant_initializer(0.0),
+                         scope='fac2out' + str(i), reuse=reuse)
+                Vj = shifted_softplus(Vj)
+            elif self.activation == "selu":
+                Vj = dense(fVj, self.n_basis, use_bias=False,
+                         weight_init=tf.random_normal_initializer(stddev = 1.0/n_factors),
+                         nonlinearity=tf.nn.selu,
+                         scope='fac2out' + str(i), reuse=reuse)
+                #Vj = tf.contrib.nn.alpha_droupout(Vj, 0.9)
+            elif self.activation == "relu":
+                Vj = dense(fVj, self.n_basis, use_bias=False,
+                         weight_init=tf.constant_initializer(0.0),
+                         nonlinearity=tf.nn.relu,
+                         scope='fac2out' + str(i), reuse=reuse)
+            else:
+                Vj = dense(fVj, self.n_basis, use_bias=False,
                          weight_init=tf.constant_initializer(0.0),
                          nonlinearity=tf.nn.tanh,
-                         scope='fac2out', reuse=reuse)
+                         scope='fac2out' + str(i), reuse=reuse)
 
             V = masked_sum(Vj, mask, axes=2)
-
+            ### atom embedding update ###
             X += V
-            reuse = True
+            reuse = None
 
-            # output
-        o1 = dense(X, self.n_basis // 2, nonlinearity=tf.nn.tanh)
+        ### readout layers ###
+        if self.transferlearning:
+            o1 = dense(X, self.n_basis // 2)
+            o1 = shifted_softplus(o1)
+            o = o1
+            num = 2
+        else:
+            o1 = dense(X, self.n_basis // 2, nonlinearity=tf.nn.tanh)
+            o = o1
+            num = 2
+        ### add readout layers ###
+        for i in range(self.nr):
+            num = num * 2
+            o = dense(o, self.n_basis//num, name = "new_" * (i + 1) + "layer")
+            o = shifted_softplus(o)
 
-        yi = dense(o1, 1,
-                     weight_init=tf.constant_initializer(0.0),
-                     use_bias=True)
+
+        yi = dense(o, 1, weight_init=tf.constant_initializer(0.0), use_bias=True)
 
         #mu = tf.get_variable('mu', shape=(1,),
         #                         initializer=L.reference_initializer(mu),
@@ -217,6 +251,7 @@ class Model:
         mask = tf.cast(atom_mask > 0, tf.float32)
 
         y = tf.reduce_sum(yi * mask, 1)
+
 
         return {'y': y, 'y_i': yi, 'o1':o1, 'X':X}
 

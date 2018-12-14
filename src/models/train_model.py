@@ -2,10 +2,10 @@
 import tensorflow as tf
 import numpy as np
 
-import DTNN_train
-from DTNN_train import read_mustd
-from DTNN_train import get_ref
-from DTNN_train import runmodel
+import train
+from train import read_mustd
+from train import get_ref
+from train import runmodel
 
 import os
 import click
@@ -14,7 +14,8 @@ import logging
 
 @click.command()
 @click.option("--refidx",default = "10", show_default = True, help = "Target index")
-@click.option("--modeltype", default = "qm9mmff", show_default = True, help = "Please identify which model you want to train: dtnn7id, tlmmff, tlconfmmff")
+@click.option("--datatype", default = "qm9mmff", show_default = True, help = "Please identify input datatype: qm9mmff,emol9mmff")
+@click.option("--geometry", default = "QM", show_defualt = True, help = "Please identify input geometry: QM, MMFF")
 @click.option("--batchsize",default = "100", show_default = True, help = "Training batchsize")
 @click.option("--opt",default = "Adam", show_default = True, help = "Training optimizer: Adam, GD")
 @click.option("--trainschedule",default = "cyclic", show_default = True, help = "Training schedule: cylcic, constant, decay")
@@ -25,21 +26,33 @@ import logging
 @click.option("--ninteractions",default = "7", show_default = True, help = "Depth of interaction blocks")
 @click.option("--cutoff",default = "3", show_default = True, help = "Distance cutoff")
 @click.option("--step",default = "0.1", show_default = True, help = "Step between Gaussians")
-@click.option("--activation",default = "0.1", show_default = True, help = "Activation function in interaction block")
+@click.option("--activation",default = "SSoftp", show_default = True, help = "Activation function in interaction block")
 @click.option("--weights",default = "update", show_default = True, help = "Share or update weights in interaction block")
 @click.option("--nepoch",default = "400", show_default = True, help = "Training epochs")
 @click.option("--checkpointinterval",default = "1000", show_default = True, help = "Check point every n steps")
 @click.option("--inputdir", default = "../../data/processed",show_default = True, help = "Input directory", type = click.Path(exists = True))
 @click.option("--outputdir",default = "../../models/",show_default = True, help = "Output directory", type = click.Path())
+### Whether to add new molecules dataset ###
+@click.option("--addnewm",is_flag=True, help = "Add new molecules dataset flag")
 ### when transfer learning model (tlmmff,tlconfmmff), use transferlearning flag and provide restorename ###
 @click.option("--transferlearning",is_flag=True, help = "Transfer learning flag")
 @click.option("--restorename",default = "None", show_default = True, help = "Restore model in transfer learning")
 
 
 
-def main(inputdir, outputdir, refidx, modeltype, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, activation, weights, nepoch, transferlearning, restorename, checkpointinterval):
+def main(inputdir, outputdir, refidx, datatype, geometry, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, activation, weights, nepoch, addnewm, transferlearning, restorename, checkpointinterval):
+
     inputdir = os.path.realpath(inputdir)
+    inputdir = os.path.join(inputdir,datatype)
     outputdir = os.path.realpath(outputdir)
+    if datatype == "qm9mmff" and geometry == "QM":
+        modeltype = " dtnn7id"
+    elif datatype == "qm9mmff" and geometry == "MMFF" and transferlearning:
+        modeltype = "tlmmff"
+    elif datatype == "emol9mmff" and geometry == "MMFF" and transferlearning:
+        modeltype = "tlconfmmff"
+    else:
+        modeltype = "others"
     outputdir = os.path.join(outputdir,modeltype)
     os.system("mkdir " + outputdir)
     os.chdir(outputdir)
@@ -49,7 +62,8 @@ def main(inputdir, outputdir, refidx, modeltype, batchsize, opt, trainschedule, 
 
     logger.info("HYPERPARAMETERS:")
     logger.info("Target Index:" + refidx )
-    logger.info("Model Type:" + modeltype)
+    logger.info("Data Type:" + datatype)
+    logger.info("Input Geometry:")
     logger.info("Batch Size:" + batchsize )
     logger.info("Optimizer Type:" + opt )
     logger.info("Train Schedule:" + trainschedule)
@@ -68,19 +82,25 @@ def main(inputdir, outputdir, refidx, modeltype, batchsize, opt, trainschedule, 
     logger.info("Activation Function:" + activation )
     logger.info("Weights:" + weights)
     logger.info("N_epochs:" + nepoch )
-    logger.info("Transfer Learning:" + transferlearning)
+    logger.info("Add New Molecules Dataset:" + str(addnewm))
+    logger.info("Transfer Learning:" + str(transferlearning))
     if transferlearning:
         logger.info("Restore Model:" + restorename)
     logger.info("Checkpoint Interval:"+ checkpointinterval)
 
-    args = [refidx, modeltype, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, nepoch, transferlearning, restorname]
-
     tf.reset_default_graph()
-    train_data = os.path.join(inputdir,"train.tfrecord")
-    val_data = os.path.join(inputdir,"validation.tfrecord")
-    test_data = os.path.join(inputdir,"test_live.tfrecord")
+    if addnewm:
+        train_data = [os.path.join(inputdir,"train.tfrecord"),os.path.join(inputdir,"new_molecules.tfrecord")]
+        #train_data = os.path.join(inputdir,"train_new.tfrecord")
+        train_size = train_size = sum(1 for example in tf.python_io.tf_record_iterator(train_data[0])) + sum(1 for example in tf.python_io.tf_record_iterator(train_data[1]))
+        #train_size = sum(1 for example in tf.python_io.tf_record_iterator(train_data))
 
-    train_size = sum(1 for example in tf.python_io.tf_record_iterator(train_data))
+    else:
+        train_data = os.path.join(inputdir,"train.tfrecord")
+        train_size = sum(1 for example in tf.python_io.tf_record_iterator(train_data))
+
+    val_data = os.path.join(inputdir,"validation.tfrecord")
+    test_data = os.path.join(inputdir,"testlive.tfrecord")
     val_size = sum(1 for example in tf.python_io.tf_record_iterator(val_data))
     test_size = sum(1 for example in tf.python_io.tf_record_iterator(test_data))
 
@@ -93,7 +113,8 @@ def main(inputdir, outputdir, refidx, modeltype, batchsize, opt, trainschedule, 
         inref1 = os.path.join(inputdir,"atomrefs.txt.npz")
     
     atom_ref = get_ref(inref1, refidx)
-    inref2 = os.path.join(inputdir,"reference.csv")
+    print(inref1)
+    inref2 = os.path.join(inputdir,"mu_std.csv")
     mu, std = read_mustd(inref2,refidx)
     logger.info("mu:" + str(mu))
     logger.info("std:" + str(std) )
@@ -101,11 +122,18 @@ def main(inputdir, outputdir, refidx, modeltype, batchsize, opt, trainschedule, 
     logger.info("Total iterations:" + str(n_iterations) )
 
     ### model name ###
-    args = [refidx, modeltype, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, nepoch, transferlearning, restorename]
+    if transferlearning:
+        args = [refidx, datatype, geometry, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, activation, weights, nepoch, "transfer", restorename]
+    else:
+        args = [refidx, datatype, geometry, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, activation, weights, nepoch]
+    
     model_name = "model_" + "_".join(args)
+    logger.info("MODEL NAME:")
+    logger.info(model_name)
+
     # train position
-    train_position_dic = {"dtnn7id":"positions","tlmmff":"mmffpositions","tlconfmmff":"positions1"}
-    train_position = train_position_dic[modeltype]
+    train_position_dic = {"qm9mmff_QM":"positions","qm9mmff_MMFF":"mmffpositions","emol9mmff_QM":"positions1","emol9mmff_MMFF":"positions2"}
+    train_position = train_position_dic[datatype + "_" + geometry]
     # transfer 
 
 
@@ -113,5 +141,11 @@ def main(inputdir, outputdir, refidx, modeltype, batchsize, opt, trainschedule, 
             int(batchsize), int(nbasis), int(ninteractions), float(cutoff), float(step), 
             activation, weights, opt, trainschedule, int(cycles), float(lrint), float(decayrate),int(n_iterations), 
             mu, std, atom_ref, 
-            model_name, transferlearning, restorename, logger, checkpointinterval)
-#
+            model_name, transferlearning, restorename, logger, int(checkpointinterval),outputdir)
+##
+if __name__ == "__main__":
+    log_fmt = '%(asctime)s - %(name)s -  %(levelname)s - %(message)s'
+    datefmt='%m/%d/%Y %H:%M:%S'
+    logging.basicConfig(level=logging.INFO, format=log_fmt, datefmt=datefmt)
+    main()
+

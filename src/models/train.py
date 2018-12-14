@@ -2,7 +2,9 @@
 import os
 import tensorflow as tf
 import numpy as np
-from DTNN_readtfrecord_mmff_cutoff_samestep import read_tfrecord
+from readtfrecord import read_tfrecord
+import model
+from model import Model
 
 import sys
 from ase.units import kcal, mol
@@ -45,14 +47,13 @@ def get_model(transferlearning, train_features,
     :return: model information (output)
     '''
 
-    if transferlearning:
-        model = Model_trans()
-    elif:
-        if reuse == "share":
-            model = Model_reuse(train_features,n_basis,n_interactions, activation, mu, std, atom_ref)
-        elif resue == "update":
-            model = Model_reusenone(train_features,n_basis,n_interactions, activation, mu, std, atom_ref)
- 
+    if reuse == "update":
+        if transferlearning:
+            model = Model(train_features,n_basis,n_interactions, activation, mu, std, atom_ref,2,transferlearning)
+        else:
+            model = Model(train_features,n_basis,n_interactions, activation, mu, std, atom_ref,0,transferlearning)
+    else:
+        print("Weights should be updated in interaction block")
     return model.mymodel()
 
 def get_lr(lr_int, i, cycle_steps):
@@ -94,6 +95,7 @@ def get_data(idx):
     '''Get input data in small to large training 
     
     '''
+    dbdir = ""
     traintf = dbdir + 'train_nolarger6_' + str(idx) + '.tfrecord'
     #traintf = dbdir + 'train.tfrecord' 
     #val_nolarger6_nocross.tfrecord is same as val_7.tfrecord
@@ -129,7 +131,7 @@ def read_mustd(infile,refidx):
     :param refidx: target idx
     '''
     for line in open(infile):
-        if int(line.split(",")[0]) == refidx:
+        if int(line.split(",")[0]) == int(refidx):
             mu = np.array([float(line.split(",")[1])])
             std = np.array([float(line.split(",")[2].strip("\n"))])
     return mu, std
@@ -140,6 +142,7 @@ def get_ref(infile, refidx):
     :param infile: file with reference information
     :refidx: target idx
     '''
+    refidx = int(refidx)
     if refidx == 9:
         ref = 0
     elif refidx == 10:
@@ -163,7 +166,7 @@ def get_ref(infile, refidx):
 
 def runmodel(refidx, train_position, train_data, val_data, test_data, train_size, val_size, test_size, 
             batch_size, n_basis, n_interactions, cutoff, step, activation, reuse, opt, train_schedule, cycles, lr_int, decay_rate,n_iterations, mu, std, atom_ref, 
-            model_name, transfer_learning, restore_model, logger, checkpoint_interval):
+            model_name, transfer_learning, restore_model, logger, checkpoint_interval, model_dir):
     ''' Training moel
     
     :param refidx: target idx
@@ -224,7 +227,7 @@ def runmodel(refidx, train_position, train_data, val_data, test_data, train_size
     iter_valid,valid_features = read_tfrecord(val_data, train_position, batch_size = val_size, num_epochs= None, shuffle = False,cutoff = cutoff, step = step)
     iter_test,test_features = read_tfrecord(test_data, train_position, batch_size = test_size, num_epochs= None, shuffle = False,cutoff = cutoff, step = step)
     ### construct model ###
-    train_output = get_model(train_features,mu,std,atom_ref,reuse,n_basis,n_interactions,activation)
+    train_output = get_model(transfer_learning, train_features,mu,std,atom_ref,reuse,n_basis,n_interactions,activation)
     ### evaluate performance ###
     cost = tf.reduce_mean((train_features['targets'][:,refidx]-train_output['y'])**2)
     mae = tf.reduce_mean(tf.abs(train_features['targets'][:,refidx]-train_output['y']))
@@ -298,7 +301,7 @@ def runmodel(refidx, train_position, train_data, val_data, test_data, train_size
 
         for i in range(start_iter, n_iterations+1):
             if train_schedule == "cyclic":
-                c_lr= get_lr(train_schedule, lr_int, i, global_step, cycle_steps)
+                c_lr= get_lr(lr_int, i, cycle_steps)
                 _, rmse_val, mae_val = sess.run([train_op, cost, mae],feed_dict = {lr:c_lr})
             elif train_schedule == "constant":
                 c_lr = lr_int
@@ -360,39 +363,3 @@ def runmodel(refidx, train_position, train_data, val_data, test_data, train_size
         logger.info('validation_min:' + str(val_min) +',test_min:' + str(test_min) + ',total_min:' + str(total_min))
         chkpt_saver.save(sess, chkpt, i)
    
-if __name__ == "__main__":
-    #project_dir = "/beegfs/jl7003/dtnn_paper_result/"
-    project_dir = "/scratch/jl7003/Data_smalltolarge/"
-    model_dir = project_dir + "model"
-    checkpoint_interval = 10
-
-    #dbdir = project_dir + 'prepare_data/db/split_2/'
-    dbdir = project_dir
-
-
-    # previous best set --> default hyperparameters
-    args_default = {"refidx":10, "train_posions":"positions", 
-                    "batch_size" : 100, "opt":"Adam", "train_schedule":"cyclic", 
-                    "lr_int":0.001, "decay_rate":None, "activation":"SSoftp", 
-                    "initialization":None, "batchnorm":None, "dropout":None,
-                    "n_basis":256,"n_interactions":7,"cutoff":3, "step":0.1,"reuse":"reusenone",
-                    "n_epochs":400,"cross_type":"nocross"}
-    if len(sys.argv) < 2: 
-        args = args_default.values()
-        logger.info("Using default setting")
-    elif len(sys.argv[1:]) == 18:
-        args = sys.argv[1:]
-        logger.info("Using new setting")
-    else:
-        args = sys.argv[1:]
-        #print(args)
-        name_list = [(idx,arg) for (idx,arg) in enumerate(args) if arg[0:2] == "--"]
-        cmd = "Using new setting with change: "
-        for idx, name in name_list:
-            args_default[name[2:]] = args[idx + 1]
-            cmd += name[2:] + ":" + args[idx +1] + ","
-        args = args_default.values()
-        logger.info(cmd )
-        
-    #print(args)
-    main(args)
