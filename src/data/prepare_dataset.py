@@ -64,6 +64,8 @@ def main(datatype, outputdir, inputdir):
         outfile = "test.tfrecord"
         write_tfrecord(tar,outfile,test_id[0:5])
         tar.close()
+        ### new_molecules ###
+        os.system("cp " + os.path.join(inputdir,"new_molecules_new.tfrecord") + " new_molecules.tfrecord")
         ### get mu, std ###
         train = "train.tfrecord"
         size = len(train_id[0:5])
@@ -71,6 +73,9 @@ def main(datatype, outputdir, inputdir):
         reference = os.path.join(inputdir,"atomrefs.txt.npz")
         outfile = open("mu_std.csv","w")
         getmustd_final(train,position,size,reference,outfile)
+        ### get atom ref ###
+        os.system("cp " + reference + " .")
+
         logger.info('Done')
 
     elif datatype == "emol9mmff":
@@ -88,26 +93,28 @@ def main(datatype, outputdir, inputdir):
         ## write set ###
         tar = tarfile.open((os.path.join(inputdir,"eMol9_MMFF.tar.bz2")))
         ### training ###
-        outtfile = 'eMol9_mmff_train.tfrecord'
+        outtfile = 'train.tfrecord'
         processeMol(tar,outtfile,traindf[0:5])
         ### validation ###
-        outtfile = 'eMol9_mmff_validation.tfrecord'
+        outtfile = 'validation.tfrecord'
         processeMol(tar,outtfile,valdf[0:5])
         ### test_live ###
-        outtfile = 'eMol9_mmff_testlive.tfrecord'
+        outtfile = 'testlive.tfrecord'
         processeMol(tar,outtfile,testlivedf[0:5])
         ### test ###
-        outtfile = 'eMol9_mmff_test.tfrecord'
+        outtfile = 'test.tfrecord'
         processeMol(tar,outtfile,testdf[0:5])
         tar.close()
         logger.info('Done')
         ### get mu,std ###
-        train = "eMol9_mmff_train.tfrecord"
+        train = "train.tfrecord"
         size = len(traindf[0:5])
         position = "positions1"
         reference = os.path.join(inputdir,"atomref.B3LYP_631Gd.npz")
         outfile = open("mu_std.csv","w")
         getmustd_final(train,position,size,reference,outfile)
+        ### get atom ref ###
+        os.system("cp " + reference + " .")
         logger.info('Done')
 
 
