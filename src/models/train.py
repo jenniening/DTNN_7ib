@@ -107,7 +107,7 @@ def get_data(idx):
     return traintf, validtf, testtf
 
 
-def transfer_learning(num_readout_new = 2):
+def transfer_learning_scope(num_readout_new = 2):
     '''Get transfer learning retrain scope and restore scope
     
     :param num_readout_new: [description], defaults to 2
@@ -242,7 +242,7 @@ def runmodel(refidx, train_position, train_data, val_data, test_data, train_size
     ### transfer learning ###
     if transfer_learning:
         ### determine which variables needed to be trained ###
-        scope_train, scope_restore = transfer_learning()
+        scope_train, scope_restore = transfer_learning_scope()
         train_vars = tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES,scope = scope_train)
         train_op = optimizer.minimize(cost, global_step=global_step,var_list=train_vars)
     else:
@@ -265,7 +265,7 @@ def runmodel(refidx, train_position, train_data, val_data, test_data, train_size
         ### transfer learning ###
         if transfer_learning:
             ### determine which variables needed to be restored ###
-            restore_path = os.path.join(model_dir,restore_model)
+            restore_path = restore_model
             restorefile = open(restore_path + "/validation.txt")
             restore = restorefile.readline().split('"')[1].strip('"\n')
             restore = os.path.join(restore_path, restore)

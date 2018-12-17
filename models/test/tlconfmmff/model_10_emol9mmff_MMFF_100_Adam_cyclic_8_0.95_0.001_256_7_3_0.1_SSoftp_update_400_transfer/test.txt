@@ -1,0 +1,2 @@
+model_checkpoint_path: "/Users/jianinglu1/Documents/GitHub/DTNN_7id/models/test/tlconfmmff/model_10_emol9mmff_MMFF_100_Adam_cyclic_8_0.95_0.001_256_7_3_0.1_SSoftp_update_400_transfer/checkpoint_1_test-0"
+all_model_checkpoint_paths: "/Users/jianinglu1/Documents/GitHub/DTNN_7id/models/test/tlconfmmff/model_10_emol9mmff_MMFF_100_Adam_cyclic_8_0.95_0.001_256_7_3_0.1_SSoftp_update_400_transfer/checkpoint_1_test-0"

@@ -53,22 +53,22 @@ def main(datatype, outputdir, inputdir):
         tar = tarfile.open(os.path.join(inputdir,"qm9_mmff.tar.bz2"))
         ### training ###
         outfile = "train.tfrecord"
-        write_tfrecord(tar,outfile,train_id[0:5])
+        write_tfrecord(tar,outfile,train_id)
         ### validation ###
         outfile = "validation.tfrecord"
-        write_tfrecord(tar,outfile,val_id[0:5])
+        write_tfrecord(tar,outfile,val_id)
         ### test_live ###
         outfile = "testlive.tfrecord"
-        write_tfrecord(tar,outfile,test_live_id[0:5])
+        write_tfrecord(tar,outfile,test_live_id)
         ### test ###
         outfile = "test.tfrecord"
-        write_tfrecord(tar,outfile,test_id[0:5])
+        write_tfrecord(tar,outfile,test_id)
         tar.close()
         ### new_molecules ###
         os.system("cp " + os.path.join(inputdir,"new_molecules_new.tfrecord") + " new_molecules.tfrecord")
         ### get mu, std ###
         train = "train.tfrecord"
-        size = len(train_id[0:5])
+        size = len(train_id)
         position = "positions"
         reference = os.path.join(inputdir,"atomrefs.txt.npz")
         outfile = open("mu_std.csv","w")
@@ -94,21 +94,21 @@ def main(datatype, outputdir, inputdir):
         tar = tarfile.open((os.path.join(inputdir,"eMol9_MMFF.tar.bz2")))
         ### training ###
         outtfile = 'train.tfrecord'
-        processeMol(tar,outtfile,traindf[0:5])
+        processeMol(tar,outtfile,traindf)
         ### validation ###
         outtfile = 'validation.tfrecord'
-        processeMol(tar,outtfile,valdf[0:5])
+        processeMol(tar,outtfile,valdf)
         ### test_live ###
         outtfile = 'testlive.tfrecord'
-        processeMol(tar,outtfile,testlivedf[0:5])
+        processeMol(tar,outtfile,testlivedf)
         ### test ###
         outtfile = 'test.tfrecord'
-        processeMol(tar,outtfile,testdf[0:5])
+        processeMol(tar,outtfile,testdf)
         tar.close()
         logger.info('Done')
         ### get mu,std ###
         train = "train.tfrecord"
-        size = len(traindf[0:5])
+        size = len(traindf)
         position = "positions1"
         reference = os.path.join(inputdir,"atomref.B3LYP_631Gd.npz")
         outfile = open("mu_std.csv","w")
@@ -125,7 +125,7 @@ def main(datatype, outputdir, inputdir):
         os.chdir(datadir)
         tar = tarfile.open(os.path.join(inputdir,"Platinum_MMFF.tar.bz2"))
         rmsd = os.path.join(inputdir,"RMSD_nolarger01.csv")
-        index_list = [line.split(",")[1].rstrip() for line in open(rmsd) if line.split(",")[1].rstrip() != "index"][0:5]
+        index_list = [line.split(",")[1].rstrip() for line in open(rmsd) if line.split(",")[1].rstrip() != "index"]
         pro = os.path.join(inputdir,"Gaussian_properties.csv")
         outtf = "platinum.tfrecord"
         processPlatinum(tar,pro,outtf,index_list)

@@ -36,15 +36,17 @@ import logging
 @click.option("--addnewm",is_flag=True, help = "Add new molecules dataset flag ")
 ### when transfer learning model (tlmmff,tlconfmmff), use transferlearning flag and provide restorename ###
 @click.option("--transferlearning",is_flag=True, help = "Transfer learning flag")
-@click.option("--restorename",default = "None", show_default = True, help = "Restore model in transfer learning")
+@click.option("--restorename",default = "model_10_qm9mmff_QM_100_Adam_Cyclic_8_0.95_0.001_256_7_3_0.1_SSoftp_update_400", show_default = True, help = "Restore model in transfer learning")
+@click.option("--restoredir",default = "../../models/", show_default = True, help = "Restore model directory")
 
 
 
-def main(inputdir, outputdir, refidx, datatype, geometry, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, activation, weights, nepoch, addnewm, transferlearning, restorename, checkpointinterval):
+def main(inputdir, outputdir, refidx, datatype, geometry, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, activation, weights, nepoch, addnewm, transferlearning, restorename, restoredir, checkpointinterval):
 
     inputdir = os.path.realpath(inputdir)
     inputdir = os.path.join(inputdir,datatype)
     outputdir = os.path.realpath(outputdir)
+    restoredir = os.path.realpath(restoredir)
     if datatype == "qm9mmff" and geometry == "QM":
         modeltype = "dtnn7id"
     elif datatype == "qm9mmff" and geometry == "MMFF" and transferlearning:
@@ -86,6 +88,17 @@ def main(inputdir, outputdir, refidx, datatype, geometry, batchsize, opt, trains
     logger.info("Transfer Learning:" + str(transferlearning))
     if transferlearning:
         logger.info("Restore Model:" + restorename)
+        if restorename.split("_")[2] == "qm9mmff" and restorename.split("_")[3] == "QM":
+            restore_modeltype = "dtnn7id"
+        elif restorename.split("_")[2] == "qm9mmff" and restorename.split("_")[3] == "MMFF":
+            restore_modeltype = "tlmmff"
+        elif restorename.split("_")[2] == "emol9mmff" and restorename.split("_")[3] == "MMFF":
+            restore_modeltype = "tlconfmmff"
+        else:
+            restore_modeltype = "others"
+        restoredir = os.path.join(restoredir,restore_modeltype)
+        restorename = os.path.join(restoredir,restorename)
+
     logger.info("Checkpoint Interval:"+ checkpointinterval)
 
     tf.reset_default_graph()
