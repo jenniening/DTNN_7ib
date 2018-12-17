@@ -81,11 +81,11 @@ python train_model.py
 ```
 Train TL_QM9<sub>M</sub>:
 ```
-python train_model.py --geometry MMFF --transferlearning --restorename DTNN_7id_Name
+python train_model.py --geometry MMFF --transferlearning
 ```
 Train TL_eMol9_C<sub>M</sub>:
 ```
-python train_model.py --datatype emol9mmff --geometry MMFF --transferlearning --restorename DTNN_7id_Name
+python train_model.py --datatype emol9mmff --geometry MMFF --transferlearning
 ```
 ### Prediction:(src/model) <br>
 All scipts for prediction are in src/data directory. To see the option for prediction:
