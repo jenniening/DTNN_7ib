@@ -30,10 +30,10 @@ import logging
 @click.option("--weights",default = "update", show_default = True, help = "Share or update weights in interaction block")
 @click.option("--nepoch",default = "400", show_default = True, help = "Training epochs")
 @click.option("--checkpointinterval",default = "1000", show_default = True, help = "Check point every n steps")
-@click.option("--inputdir", default = "../../data/processed",show_default = True, help = "Input directory", type = click.Path(exists = True))
+@click.option("--inputdir", default = "../../data/external",show_default = True, help = "Input directory", type = click.Path(exists = True))
 @click.option("--outputdir",default = "../../models/",show_default = True, help = "Output directory", type = click.Path())
 ### Whether to add new molecules dataset ###
-@click.option("--addnewm",is_flag=True, help = "Add new molecules dataset flag")
+@click.option("--addnewm",is_flag=True, help = "Add new molecules dataset flag ")
 ### when transfer learning model (tlmmff,tlconfmmff), use transferlearning flag and provide restorename ###
 @click.option("--transferlearning",is_flag=True, help = "Transfer learning flag")
 @click.option("--restorename",default = "None", show_default = True, help = "Restore model in transfer learning")
@@ -107,7 +107,7 @@ def main(inputdir, outputdir, refidx, datatype, geometry, batchsize, opt, trains
     logger.info("Total train:" + str(train_size) )
     logger.info("Total validation:" + str(val_size) )
     logger.info("Total test:" + str(test_size) )
-    if transferlearning:
+    if datatype == "emol9mmff":
         inref1 = os.path.join(inputdir,"atomref.B3LYP_631Gd.npz")
     else:
         inref1 = os.path.join(inputdir,"atomrefs.txt.npz")
@@ -123,7 +123,7 @@ def main(inputdir, outputdir, refidx, datatype, geometry, batchsize, opt, trains
 
     ### model name ###
     if transferlearning:
-        args = [refidx, datatype, geometry, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, activation, weights, nepoch, "transfer", restorename]
+        args = [refidx, datatype, geometry, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, activation, weights, nepoch, "transfer"]
     else:
         args = [refidx, datatype, geometry, batchsize, opt, trainschedule, cycles, decayrate, lrint, nbasis, ninteractions, cutoff, step, activation, weights, nepoch]
     

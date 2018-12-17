@@ -5,23 +5,31 @@ import sys
 import logging
 from ase.units import kcal, mol
 
-import read_tfrecord
+import readtfrecord
 from readtfrecord import read_tfrecord
-import model
-from model import get_model
+import train
+from train import get_model
 
 
 def evalmodel(refidx, test_position, test_data, test_size, test_type,
               batch_size,model_name, model_dir,
               transfer_learning, mu, std, atom_ref,logger):
-
+    batch_size = int(batch_size)
+    refidx = int(refidx)
     args = model_name.split("_")[1:]
-    n_basis = int(args[9:10])
-    n_interactions = int(args[10:11])
-    cutoff = float(args[11:12])
-    step = float(args[12:13])
-    activation = args[13:14]
-    reuse = args[14:15]
+    print(args)
+    n_basis = int(args[9])
+    n_interactions = int(args[10])
+    cutoff = float(args[11])
+    step = float(args[12])
+    activation = args[13]
+    reuse = args[14]
+    logger.info("N_basis:" + str(n_basis) )
+    logger.info("N_interactions:" + str(n_interactions))
+    logger.info("Distance Cutoff:" + str(cutoff ))
+    logger.info("Distance Step:" + str(step ))
+    logger.info("Activation Function:" + str(activation ))
+    logger.info("Weights:" + str(reuse))
 
     #testtf = dbdir + 'test.tfrecord'
     #testlive = dbdir + 'test_live.tfrecord'
@@ -42,7 +50,7 @@ def evalmodel(refidx, test_position, test_data, test_size, test_type,
     test_iteration = np.floor_divide(test_size, batch_size) + 1
 
 
-    iter_test,test_features  = read_tfrecord(test_data, test_position, batch_size = batch_size, num_epochs= None, shuffle= True,buffer_size = train_size, cutoff = cutoff, step = step)
+    iter_test,test_features  = read_tfrecord(test_data, test_position, batch_size = batch_size, num_epochs= None, shuffle= False,buffer_size = test_size, cutoff = cutoff, step = step)
     test_output = get_model(transfer_learning, test_features, mu, std, atom_ref,reuse,n_basis,n_interactions,activation)
     
     cost = tf.reduce_mean((test_features['targets'][:,refidx]-test_output['y'])**2)
