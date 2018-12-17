@@ -15,7 +15,7 @@ import logging
 @click.command()
 @click.option("--refidx",default = "10", show_default = True, help = "Target index")
 @click.option("--datatype", default = "qm9mmff", show_default = True, help = "Please identify input datatype: qm9mmff,emol9mmff")
-@click.option("--geometry", default = "QM", show_defualt = True, help = "Please identify input geometry: QM, MMFF")
+@click.option("--geometry", default = "QM", show_default = True, help = "Please identify input geometry: QM, MMFF")
 @click.option("--batchsize",default = "100", show_default = True, help = "Training batchsize")
 @click.option("--opt",default = "Adam", show_default = True, help = "Training optimizer: Adam, GD")
 @click.option("--trainschedule",default = "cyclic", show_default = True, help = "Training schedule: cylcic, constant, decay")
@@ -46,7 +46,7 @@ def main(inputdir, outputdir, refidx, datatype, geometry, batchsize, opt, trains
     inputdir = os.path.join(inputdir,datatype)
     outputdir = os.path.realpath(outputdir)
     if datatype == "qm9mmff" and geometry == "QM":
-        modeltype = " dtnn7id"
+        modeltype = "dtnn7id"
     elif datatype == "qm9mmff" and geometry == "MMFF" and transferlearning:
         modeltype = "tlmmff"
     elif datatype == "emol9mmff" and geometry == "MMFF" and transferlearning:
@@ -113,7 +113,6 @@ def main(inputdir, outputdir, refidx, datatype, geometry, batchsize, opt, trains
         inref1 = os.path.join(inputdir,"atomrefs.txt.npz")
     
     atom_ref = get_ref(inref1, refidx)
-    print(inref1)
     inref2 = os.path.join(inputdir,"mu_std.csv")
     mu, std = read_mustd(inref2,refidx)
     logger.info("mu:" + str(mu))
