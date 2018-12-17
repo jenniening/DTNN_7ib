@@ -16,7 +16,7 @@ Project Organization
     ├── models             <- Trained models
     ├── notebooks          <- Jupyter notebooks inlcuding tutorials
     ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── result_data    <- Result data for confs.
+    │   └── result_data    <- Result data for confs, used to get conformation stability result.
     ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
     │                         generated with `pip freeze > requirements.txt`
     ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
