@@ -1,21 +1,21 @@
 DTNN_7id
 ==============================
 
-Molecular energy and ligand stability prediction models based on deep neural tensor networks and MMFF optimized geometries
+Molecular energy and ligand stability prediction models based on deep neural tensor networks and MMFF optimized geometries.
 
 Project Organization
 ------------
 
     ├── LICENSE
-    ├── Makefile           <- Makefile, used to create new environment, install requiremnts
+    ├── Makefile           <- Makefile, used to create new environment, install requiremnts.
     ├── README.md          <- The top-level README for developers using this project.
     ├── data
-    │   ├── external       <- Data used to generate results in paper
+    │   ├── external       <- Data used to generate results in paper.
     │   ├── processed      <- The final, canonical data sets for modeling.
     │   └── raw            <- The original, immutable data dump.
-    ├── models             <- Trained models
-    ├── notebooks          <- Jupyter notebooks inlcuding tutorials
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
+    ├── models             <- Trained models.
+    ├── notebooks          <- Jupyter notebooks inlcuding tutorials.
+    ├── reports            <- Generated analysis results.
     │   └── result_data    <- Result data for confs, used to get conformation stability result.
     ├── requirements.txt   <- The requirements file for reproducing the analysis environment, e.g.
     │                         generated with `pip freeze > requirements.txt`
