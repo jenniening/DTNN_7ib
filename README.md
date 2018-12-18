@@ -77,7 +77,7 @@ python train_model.py --help
 ```
 Train DTNN_7id model:
 ```
-python train_model.py
+python train_model.py --addnewm 
 ```
 Train TL_QM9<sub>M</sub>:
 ```
