@@ -108,4 +108,6 @@ Peformance of TL_eMol9_C<sub>M</sub> on Plati_C<sub>M</sub>:
 ```
 python predict_model.py --modelname TL_eMOL9_CM_name --testtype platinummmff --testpositions positions1
 ```
-Note: remember to change the model name based
+Note: remember to change the model name based<br>
+Thanks for DTNN code(https://github.com/atomistic-machine-learning/dtnn), we reimplemented elementary blocks in DTNN.
+
