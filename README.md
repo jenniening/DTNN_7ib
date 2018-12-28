@@ -1,4 +1,4 @@
-DTNN_7id
+DTNN_7ib
 ==============================
 
 Molecular energy and ligand stability prediction models based on deep neural tensor networks and MMFF optimized geometries.
