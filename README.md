@@ -113,7 +113,9 @@ Peformance of TL_eMol9_C<sub>M</sub> on Plati_C<sub>M</sub>:
 ```
 python predict_model.py --modelname TL_eMOL9_CM_name --testtype platinummmff --testpositions positions1
 ```
-Note: remember to change the model name based<br>
+Note: 
+1. If you directly run predict_model.py, the MAE and RMSE is for DTNN_7ib trained with best validation error in one of splits (performance of DTNN_7ib in paper is the avarage of five different splits) and transfer learning is applied on the atom vectors learned from this DTNN_7ib model <br>
+2. remember to change the model name based<br>
 <br>
 Thanks for DTNN code(https://github.com/atomistic-machine-learning/dtnn), we reimplemented elementary blocks in DTNN.
 
