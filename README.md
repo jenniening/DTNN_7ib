@@ -92,13 +92,18 @@ All scipts for prediction are in src/data directory. To see the option for predi
 ```
 python predict_model.py --help
 ```
-Performanc of DTNN_7id on QM9MMFF:
+Performanc of DTNN_7id on QM9:
 ```
 python predict_model.py 
 ```
+Performanc of DTNN_7id on QM9MMFF:
+
+```
+python predict_model.py  --testpositions mmffpositions
+```
 Performance of TL_QM9<sub>M</sub> on QM9MMFF:
 ```
-python predict_model.py --testpositions mmffpositions
+python predict_model.py --modelname TL_QM9_name --testpositions mmffpositions
 ```
 Peformance of TL_eMol9_C<sub>M</sub> on eMol9_C<sub>M</sub>:
 ```
