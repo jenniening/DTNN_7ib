@@ -11,7 +11,7 @@ Project Organization
     ├── README.md          <- The top-level README for developers using this project.
     ├── data
     │   ├── external       <- Data used to generate results in paper.
-    │   ├── processed      <- The final, canonical data sets for modeling.
+    │   ├── processed      
     │   └── raw            <- The original, immutable data dump.
     ├── models             <- Trained models.
     ├── notebooks          <- Jupyter notebooks inlcuding tutorials.
