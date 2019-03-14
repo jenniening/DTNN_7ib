@@ -111,8 +111,8 @@ def processQMSDF(intar,inpro,outtf,index_list):
 if __name__ == "__main__":
     outtf = '../../data/processed/Platinum_MMFF.tfrecord'
     intar = tarfile.open("../../data/raw/Platinum_MMFF.tar.bz2")
-    inrmsd = "../../data/raw/RMSD_nolarger01.csv"
-    inpro = "../../data/raw/Gaussian_properties.csv"
+    inrmsd = "../../data/raw/RMSD.csv"
+    inpro = "../../data/raw/Gaussian_properties_allRMSD.csv"
     index_list = [line.split(",")[1].rstrip() for line in open(inrmsd) if line.split(",")[1].rstrip() != "index"]
     processQMSDF(intar,inpro, outtf,index_list)
 

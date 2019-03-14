@@ -1,3 +1,3 @@
-model_checkpoint_path: "checkpoint_1_total-399999"
-all_model_checkpoint_paths: "checkpoint_1_total-398999"
-all_model_checkpoint_paths: "checkpoint_1_total-399999"
+model_checkpoint_path: "/beegfs/jl7003/dtnn_paper_result/model/confs/allRMSD/model_confs_3_1QM_ETE10_confs10_x11_0.01_interactions7_cutoff3.0_step0.1_val_3layer_allRMSD/checkpoint_1_total-397999"
+all_model_checkpoint_paths: "/beegfs/jl7003/dtnn_paper_result/model/confs/allRMSD/model_confs_3_1QM_ETE10_confs10_x11_0.01_interactions7_cutoff3.0_step0.1_val_3layer_allRMSD/checkpoint_1_total-396999"
+all_model_checkpoint_paths: "/beegfs/jl7003/dtnn_paper_result/model/confs/allRMSD/model_confs_3_1QM_ETE10_confs10_x11_0.01_interactions7_cutoff3.0_step0.1_val_3layer_allRMSD/checkpoint_1_total-397999"

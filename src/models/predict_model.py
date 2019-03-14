@@ -43,7 +43,7 @@ def main(inputdir, outputdir, refidx, batchsize, modelname, modeldir, testtype, 
     else:
         modeltype = "others"
 
-    if args[1] == "emol9mmff":
+    if testtype == "emol9mmff" or testtype == "platinummmff":
         inref1 = os.path.join(os.path.join(inputdir,args[1]),"atomref.B3LYP_631Gd.npz")
     else:
         inref1 = os.path.join(os.path.join(inputdir,args[1]),"atomrefs.txt.npz")
