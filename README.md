@@ -11,7 +11,7 @@ Project Organization
     ├── README.md          <- The top-level README for developers using this project.
     ├── data
     │   ├── external       <- Data used to generate results in paper.
-    │   ├── processed      <- The final, canonical data sets for modeling.
+    │   ├── processed      
     │   └── raw            <- The original, immutable data dump.
     ├── models             <- Trained models.
     ├── notebooks          <- Jupyter notebooks inlcuding tutorials.
@@ -92,13 +92,18 @@ All scipts for prediction are in src/data directory. To see the option for predi
 ```
 python predict_model.py --help
 ```
-Performanc of DTNN_7id on QM9MMFF:
+Performanc of DTNN_7id on QM9:
 ```
 python predict_model.py 
 ```
+Performanc of DTNN_7id on QM9MMFF:
+
+```
+python predict_model.py  --testpositions mmffpositions
+```
 Performance of TL_QM9<sub>M</sub> on QM9MMFF:
 ```
-python predict_model.py --testpositions mmffpositions
+python predict_model.py --modelname TL_QM9_name --testpositions mmffpositions
 ```
 Peformance of TL_eMol9_C<sub>M</sub> on eMol9_C<sub>M</sub>:
 ```
@@ -108,7 +113,9 @@ Peformance of TL_eMol9_C<sub>M</sub> on Plati_C<sub>M</sub>:
 ```
 python predict_model.py --modelname TL_eMOL9_CM_name --testtype platinummmff --testpositions positions1
 ```
-Note: remember to change the model name based<br>
+Note: 
+1. If you directly run predict_model.py, the MAE and RMSE is for DTNN_7ib trained with best validation error in one of splits (performance of DTNN_7ib in paper is the avarage of five different splits) and transfer learning is applied on the atom vectors learned from this DTNN_7ib model <br>
+2. remember to change the model name based<br>
 <br>
 Thanks for DTNN code(https://github.com/atomistic-machine-learning/dtnn), we reimplemented elementary blocks in DTNN.
 
