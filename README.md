@@ -46,7 +46,7 @@ make Makefile create_environment
 ```
 2. Activate environment:
 ```
-source activate DTNN_7id 
+source activate DTNN_7ib 
 ```
 3. Install requirements:
 ```
