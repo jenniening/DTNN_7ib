@@ -27,7 +27,7 @@ def split_data(partition,total_num, random_seed = 1, save = True):
     '''
 
     ### total data index ###
-    data_id_list = [i for i in range(1,total_num)]
+    data_id_list = [i for i in range(1,total_num + 1)]
     ### get partion for each type of data ###
     [tran,valn,testln] = [partition[i] for i in ["train","validation","test_live"]]
     ### whether or not to use random seed
@@ -53,7 +53,7 @@ def _int64_feature(value):
 def _float64_feature(value):
     return tf.train.Feature(float_list = tf.train.FloatList(value = value))
 
-def write_tfrecord(tar, outfile,data_list):
+def write_tfrecord_fromtar(tar, outfile,data_list):
     ''' This is function used to write data into tfrecord file format
     
     :param tar: initial tar file of dataset 
@@ -104,6 +104,78 @@ def write_tfrecord(tar, outfile,data_list):
             os.chdir(olddir)
     writer.close()
 
+### Write tfrecord from total tfrecord file ###
+### This is much faster than writing tfrecord file from tar file ###
+
+def __parse_function(record):
+    features = {"elements":tf.FixedLenFeature([], tf.string),
+                "positions":tf.FixedLenFeature([], tf.string),
+                "mmffpositions":tf.FixedLenFeature([], tf.string),
+                "targets":tf.FixedLenFeature([], tf.string)}
+    parsed_features = tf.parse_single_example(record,features)
+    features_new = {}
+    dtype = {"elements":tf.int64,"targets":tf.float32,"positions":tf.float32,"mmffpositions":tf.float32}
+    for i in parsed_features.keys():
+        feat = tf.decode_raw(parsed_features[i],dtype[i])
+        if i == "positions" or i == "mmffpositions":
+            feat = tf.reshape(feat,[-1,3])
+        if i == "targets":
+            feat = tf.reshape(feat,(15,1))
+        features_new[i] = feat
+    return features_new
+
+def read_tfrecord(tfrecord, index):
+    '''
+
+    tfrecord: input name, can be str or list
+    n_instance: number of instances will be readed
+    random_seed: shuffle random seed
+    shuffle: whether shuffle
+
+    '''
+    record = tf.data.TFRecordDataset(tfrecord)
+    record = record.map(__parse_function)
+    record = record.padded_batch(batch_size= 1000,padded_shapes=({"elements":[None,],"targets":[15,1],"positions":[None,3],"mmffpositions":[None,3]}),padding_values=None)
+    iterator  = record.make_one_shot_iterator()
+    features_new = iterator.get_next()
+    with tf.Session() as sess:
+   
+        it = int(index/1000) + 1
+        idx_final = index%1000
+   
+        for idx, i in enumerate(range(it)):
+            if idx < int(it -1):
+                sess.run(features_new)
+            else:
+                feature_int= sess.run(features_new)
+                length = len([i for i in feature_int["elements"][idx_final-1] if i != 0])
+                feature = {"elements":feature_int["elements"][idx_final -1][0:length],
+                           "targets":feature_int["targets"][idx_final -1],
+                           "positions":feature_int["positions"][idx_final -1][0:length],
+                           "mmffpositions":feature_int["mmffpositions"][idx_final -1][0:length]}
+    return feature
+
+
+def write_tfrecord_fromtfrecord(tfrecord,outfile,data_list):
+    element_conversions = {"H":1,"C":6,"O":8,"N":7,"F":9}
+    olddir = os.getcwd()
+    writer = tf.python_io.TFRecordWriter(outfile)
+    features = []
+    for idx,i in enumerate(data_list):
+        features.append(read_tfrecord(tfrecord, i))
+        if idx % 1000 == 0:
+            print(str(idx) + "/" + str(len(data_list)))
+    assert len(data_list) == len(features)
+    for f in features:
+        newfeatures = {key: _bytes_feature([f[key].tostring()]) for key in f.keys()}
+        example = tf.train.Example(features=tf.train.Features(feature=newfeatures))
+        writer.write(example.SerializeToString())
+    writer.close()
+    return None
+
+    
+    
+
 
 
 if __name__ == "__main__":
@@ -121,7 +193,8 @@ if __name__ == "__main__":
         val_id = split["validation"]
         test_live_id = split["test_live"]
         test_id = split["test"]
-    tar = tarfile.open("../../data/raw/qm9_mmff.tar.bz2")
+    #tar = tarfile.open("../../data/raw/qm9_mmff.tar.bz2")
+    tfrecord = "../../data/raw/qm9_mmff.tfrecord"
     outfile = "train.tfrecord"
-    write_tfrecord(tar,outfile,train_id)
+    write_tfrecord_fromtfrecord(tfrecord,outfile,train_id)
     tar.close()

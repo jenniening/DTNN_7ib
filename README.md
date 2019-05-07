@@ -40,13 +40,13 @@ Setup functions are in Makefile. To see functions in Makefile:
 ```
 make -f Makefile
 ```
-1. Create DTNN_7id environment:
+1. Create DTNN_7ib environment:
 ```
 make Makefile create_environment
 ```
 2. Activate environment:
 ```
-source activate DTNN_7id 
+source activate DTNN_7ib 
 ```
 3. Install requirements:
 ```
@@ -75,7 +75,7 @@ All scipts for model training are in src/data directory. To see the option for m
 ```
 python train_model.py --help
 ```
-Train DTNN_7id model:
+Train DTNN_7ib model:
 ```
 python train_model.py --addnewm 
 ```
@@ -92,11 +92,11 @@ All scipts for prediction are in src/data directory. To see the option for predi
 ```
 python predict_model.py --help
 ```
-Performanc of DTNN_7id on QM9:
+Performanc of DTNN_7ib on QM9:
 ```
 python predict_model.py 
 ```
-Performanc of DTNN_7id on QM9MMFF:
+Performanc of DTNN_7ib on QM9MMFF:
 
 ```
 python predict_model.py  --testpositions mmffpositions

@@ -31,7 +31,7 @@ import logging
 @click.option("--nepoch",default = "400", show_default = True, help = "Training epochs")
 @click.option("--checkpointinterval",default = "1000", show_default = True, help = "Check point every n steps")
 @click.option("--inputdir", default = "../../data/external",show_default = True, help = "Input directory", type = click.Path(exists = True))
-@click.option("--outputdir",default = "../../models/",show_default = True, help = "Output directory", type = click.Path())
+@click.option("--outputdir",default = "../../models/test/",show_default = True, help = "Output directory", type = click.Path())
 ### Whether to add new molecules dataset ###
 @click.option("--addnewm",is_flag=True, help = "Add new molecules dataset flag ")
 ### when transfer learning model (tlmmff,tlconfmmff), use transferlearning flag and provide restorename ###

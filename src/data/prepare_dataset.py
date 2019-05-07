@@ -2,7 +2,7 @@
 #  -*- coding: utf-8 -*-
 import Prepare_QM9_MMFF
 from Prepare_QM9_MMFF import split_data as split_data_qm9
-from Prepare_QM9_MMFF import write_tfrecord
+from Prepare_QM9_MMFF import write_tfrecord_fromtfrecord as write_tfrecord
 
 import ConvertTFrecord_Platinum_MMFF
 from ConvertTFrecord_Platinum_MMFF import processQMSDF as processPlatinum
@@ -50,20 +50,26 @@ def main(datatype, outputdir, inputdir):
         else:
             split = np.load("split_infor.npz")
             train_id,val_id,test_live_id,test_id = split["train"],split["validation"],split["test_live"],split["test"]
-        tar = tarfile.open(os.path.join(inputdir,"qm9_mmff.tar.bz2"))
+        logger.info("Finish split")
+        #tar = tarfile.open(os.path.join(inputdir,"qm9_mmff.tar.bz2"))
+        tfrecord = os.path.join(inputdir, "qm9_mmff.tfrecord")
         ### training ###
         outfile = "train.tfrecord"
-        write_tfrecord(tar,outfile,train_id)
+        write_tfrecord(tfrecord,outfile,train_id)
+        logger.info("Finish train")
         ### validation ###
         outfile = "validation.tfrecord"
-        write_tfrecord(tar,outfile,val_id)
+        write_tfrecord(tfrecord,outfile,val_id)
+        logger.info("Finish validation")
         ### test_live ###
         outfile = "testlive.tfrecord"
-        write_tfrecord(tar,outfile,test_live_id)
+        write_tfrecord(tfrecord,outfile,test_live_id)
+        logger.info("Finish testlive")
         ### test ###
         outfile = "test.tfrecord"
-        write_tfrecord(tar,outfile,test_id)
-        tar.close()
+        write_tfrecord(tfrecord,outfile,test_id)
+        logger.info("Finish test")
+        #tar.close()
         ### new_molecules ###
         os.system("cp " + os.path.join(inputdir,"new_molecules_new.tfrecord") + " new_molecules.tfrecord")
         ### get mu, std ###
@@ -91,7 +97,8 @@ def main(datatype, outputdir, inputdir):
             data = np.load("split_infor.npz")
             traindf,valdf,testdf,testlivedf = data["train_idx"], data["validation_idx"],data["test_idx"],data["test_live_idx"]
         ## write set ###
-        tar = tarfile.open((os.path.join(inputdir,"eMol9_MMFF.tar.bz2")))
+        #tar = tarfile.open((os.path.join(inputdir,"eMol9_MMFF.tar.bz2")))
+        tar = os.path.join(inputdir,"eMol9_MMFF/")
         ### training ###
         outtfile = 'train.tfrecord'
         processeMol(tar,outtfile,traindf)
@@ -124,9 +131,9 @@ def main(datatype, outputdir, inputdir):
         ### all structures have been used as test ###
         os.chdir(datadir)
         tar = tarfile.open(os.path.join(inputdir,"Platinum_MMFF.tar.bz2"))
-        rmsd = os.path.join(inputdir,"RMSD_nolarger01.csv")
+        rmsd = os.path.join(inputdir,"RMSD.csv")
         index_list = [line.split(",")[1].rstrip() for line in open(rmsd) if line.split(",")[1].rstrip() != "index"]
-        pro = os.path.join(inputdir,"Gaussian_properties.csv")
+        pro = os.path.join(inputdir,"Gaussian_properties_allRMSD.csv")
         outtf = "platinum.tfrecord"
         processPlatinum(tar,pro,outtf,index_list)
         tar.close()

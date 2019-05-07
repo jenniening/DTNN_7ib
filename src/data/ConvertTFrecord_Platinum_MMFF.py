@@ -47,18 +47,18 @@ def readTars(tar, idx, tempdir,logcsv):
     
     log = [log for log in logcsv if log[0] == idx][0]
 
-    sdf1 = tar.extract('./' + idx + '.sdf', path = tempdir)
-    sdf2 = tar.extract('./' + idx + '.opt.sdf',path = tempdir)
+    sdf1 = tar.extract('' + idx + '.sdf', path = tempdir)
+    sdf2 = tar.extract('' + idx + '.opt.sdf',path = tempdir)
 
     if log[1] == '':
 
         return [[],[],[],[]]
     
     else:
-        tar.extract('./' + idx + '.sdf', path = tempdir)
-        tar.extract('./' + idx + '.opt.sdf',path = tempdir)
-        sdf1 = os.path.join(tempdir,'./' + idx + '.sdf')
-        sdf2 = os.path.join(tempdir,'./' + idx + '.opt.sdf')
+        tar.extract('' + idx + '.sdf', path = tempdir)
+        tar.extract('' + idx + '.opt.sdf',path = tempdir)
+        sdf1 = os.path.join(tempdir,'' + idx + '.sdf')
+        sdf2 = os.path.join(tempdir,'' + idx + '.opt.sdf')
         e1, p1 = readSDF(open(sdf1).read())
         e2, p2 = readSDF(open(sdf2).read())
         log = convertUnits(log)
@@ -90,6 +90,7 @@ def processQMSDF(intar,inpro,outtf,index_list):
     logcsv = readCSV(open(logfn).read())
 
     for idx in index_list:
+        print(idx)
         with TemporaryDirectory() as temp_dir:
             data_infor = readTars(tar, idx, temp_dir, logcsv)
             elements = np.array(data_infor[0]).astype(np.int64)

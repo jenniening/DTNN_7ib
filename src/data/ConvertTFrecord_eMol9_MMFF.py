@@ -128,10 +128,11 @@ def readTars(datafd, idx, index_list):
 
     start = (idx-1) * 1000 + 1
     end = idx * 1000
-    logfn = './sdf' + str(idx) + '/' + str(start) + '_' + str(end) + '.log.csv'
-    rmsdfn = './sdf' + str(idx) + '/' + str(start) + '_' + str(end) + '.rmsd.csv'
+    logfn = 'sdf' + str(idx) + '/' + str(start) + '_' + str(end) + '.log.csv'
+    rmsdfn = 'sdf' + str(idx) + '/' + str(start) + '_' + str(end) + '.rmsd.csv'
     
-    tar = datafd
+    tarfn = datafd + 'sdf' + str(idx) + '.tar'
+    tar = tarfile.open(tarfn)
     logcsv = readCSV(tar.extractfile(logfn).read())
 
     for log in logcsv:
@@ -139,8 +140,8 @@ def readTars(datafd, idx, index_list):
     ### only contain structures in index_list ###
         if int(log[0]) in index_list:
             print(log[0])
-            sdf1 = './sdf' + str(idx) + '/' + log[0] + '.sdf'
-            sdf2 = './sdf' + str(idx) + '/' + log[0] + '.opt.star.sdf'
+            sdf1 = 'sdf' + str(idx) + '/' + log[0] + '.sdf'
+            sdf2 = 'sdf' + str(idx) + '/' + log[0] + '.opt.star.sdf'
             if log[1] == '':
                 continue
             e1, p1 = readSDF(tar.extractfile(sdf1).read())
@@ -150,7 +151,7 @@ def readTars(datafd, idx, index_list):
             if len(e1) != len(e2):
                 print("Error:" + sdf1)
             yield (e1, p1, p2, logfloat)
-    #tar.close()
+    tar.close()
 
     return None
 
@@ -204,6 +205,6 @@ if __name__ == "__main__":
     file_type = "train"
     outtf = 'eMol9_mmff_' + file_type + '.tfrecord'
     
-    inf = tarfile.open("../../data/raw/eMol9_MMFF.tar.bz2")
+    inf = "../../data/raw/eMol9_MMFF/"
     processQMSDF(inf,outtf,index_list)
     inf.close()
