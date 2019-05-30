@@ -118,4 +118,5 @@ Note:
 2. remember to change the model name<br>
 <br>
 Thanks for DTNN code(https://github.com/atomistic-machine-learning/dtnn), we reimplemented elementary blocks in DTNN.
+Ref:Jianing Lu, Cheng Wang and Yingkai Zhang. J. Chem. Theory Comput. https://pubs.acs.org/doi/pdf/10.1021/acs.jctc.9b00001
 
